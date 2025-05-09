@@ -1,0 +1,106 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+      background-color: white;
+    }
+  </style>
+</head>
+<body>
+<canvas id="lifeWheel" width="500" height="500"></canvas>
+
+<script>
+  const canvas = document.getElementById('lifeWheel');
+  const ctx = canvas.getContext('2d');
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
+  const maxRadius = 200;
+  const levels = 5;
+  const categories = [
+    "Spiritual", "Learning", "Career", "Financial",
+    "Leisure", "Health", "Family", "Social"
+  ];
+  const angleStep = (2 * Math.PI) / categories.length;
+  const userSelections = new Array(categories.length).fill(0);
+
+  function drawWheel() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let i = 0; i < categories.length; i++) {
+      for (let j = 0; j < levels; j++) {
+        const innerR = (j / levels) * maxRadius;
+        const outerR = ((j + 1) / levels) * maxRadius;
+        const startAngle = i * angleStep;
+        const endAngle = (i + 1) * angleStep;
+
+        // Color selection
+        if (userSelections[i] > j) {
+          ctx.fillStyle = "rgba(92, 182, 203, 0.6)";
+        } else {
+          ctx.fillStyle = "#ffffff";
+        }
+
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, outerR, startAngle, endAngle);
+        ctx.lineTo(centerX, centerY);
+        ctx.arc(centerX, centerY, innerR, endAngle, startAngle, true);
+        ctx.closePath();
+        ctx.fill();
+
+        // Optional: segment outline
+        ctx.strokeStyle = "#aaa";
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    }
+
+    // Category labels
+    ctx.fillStyle = "#000";
+    ctx.font = "12px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    for (let i = 0; i < categories.length; i++) {
+      const angle = (i + 0.5) * angleStep;
+      const labelRadius = maxRadius + 20;
+      const x = centerX + labelRadius * Math.cos(angle);
+      const y = centerY + labelRadius * Math.sin(angle);
+      ctx.fillText(categories[i], x, y);
+    }
+  }
+
+  function getSegmentFromCoords(x, y) {
+    const dx = x - centerX;
+    const dy = y - centerY;
+    const angle = (Math.atan2(dy, dx) + 2 * Math.PI) % (2 * Math.PI);
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const categoryIndex = Math.floor(angle / angleStep);
+    const level = Math.ceil((distance / maxRadius) * levels);
+    if (level >= 1 && level <= levels) {
+      return { categoryIndex, level };
+    }
+    return null;
+  }
+
+  canvas.addEventListener('click', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const segment = getSegmentFromCoords(x, y);
+    if (segment) {
+      userSelections[segment.categoryIndex] = segment.level;
+      drawWheel();
+    }
+  });
+
+  drawWheel();
+</script>
+</body>
+</html>
