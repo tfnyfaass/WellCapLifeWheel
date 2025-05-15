@@ -124,7 +124,7 @@
     ctx.font = "bold 14px Arial";
     ctx.textAlign = "right";
     ctx.textBaseline = "bottom";
-    ctx.fillText("Total: " + totalScore() + " / 25", canvas.width - 10, canvas.height - 10);
+    ctx.fillText("Total: " + totalScore() + " / 25", canvas.width - 10, canvas.height - 20);
 
     // Warning message
     if (showWarning) {
@@ -132,7 +132,7 @@
       ctx.font = "bold 14px Arial";
       ctx.textAlign = "center";
       ctx.textBaseline = "bottom";
-      ctx.fillText("⚠ Total score cannot exceed 25", canvas.width / 2, canvas.height - 30);
+      ctx.fillText("⚠ Total score cannot exceed 25", canvas.width / 2, canvas.height - 20);
     }
   }
 
