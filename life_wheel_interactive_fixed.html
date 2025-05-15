@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <style>
     body {
       margin: 0;
@@ -14,7 +14,7 @@
   </style>
 </head>
 <body>
-<canvas id="lifeWheel" width="500" height="480"></canvas>
+<canvas id="lifeWheel" width="500" height="500"></canvas>
 
 <script>
   const canvas = document.getElementById('lifeWheel');
@@ -32,85 +32,107 @@
   let showWarning = false;
 
   const colors = {
-    light: "#8ECAE6",
-    mid: "#219EBC",
-    dark: "#023047",
-    stroke: "#219EBC",
     text: "#023047",
+    stroke: "#219EBC",
     alertText: "#FB8500"
   };
+
+  const scoreColors = [
+    "#E0F3F9", // 1 - lightest
+    "#B6DDF0", // 2
+    "#7FC9EB", // 3
+    "#4AAAD6", // 4
+    "#1978B5"  // 5 - darkest
+  ];
 
   function drawWheel() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Decorative solid center (not clickable)
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, 14, 0, 2 * Math.PI);
-    ctx.fillStyle = colors.text;
-    ctx.fill();
+    // Draw ring outlines
+    for (let j = 1; j <= levels; j++) {
+      const radius = (j / levels) * maxRadius;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+      ctx.strokeStyle = "#219EBC";
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+    }
 
     for (let i = 0; i < categories.length; i++) {
+      const score = userSelections[i];
+      const startAngle = i * angleStep;
+      const endAngle = (i + 1) * angleStep;
+
+      // Fill full slice based on score
+      if (score > 0) {
+        const outerRadius = (score / levels) * maxRadius;
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, outerRadius, startAngle, endAngle);
+        ctx.closePath();
+        ctx.fillStyle = scoreColors[score - 1];
+        ctx.fill();
+      }
+
+      // Segment lines
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.arc(centerX, centerY, maxRadius, startAngle, endAngle);
+      ctx.lineTo(centerX, centerY);
+      ctx.strokeStyle = colors.stroke;
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+    }
+
+    // Category labels with score
+    ctx.fillStyle = colors.text;
+    ctx.font = "13px Arial";
+    for (let i = 0; i < categories.length; i++) {
+      const angle = (i + 0.5) * angleStep;
+      const labelRadius = maxRadius + 35;
+      const x = centerX + labelRadius * Math.cos(angle);
+      const y = centerY + labelRadius * Math.sin(angle);
+      const label = categories[i] + (userSelections[i] > 0 ? ` (${userSelections[i]})` : "");
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(label, x, y);
+    }
+
+        // Show 1–5 number labels on unselected slices
+    ctx.font = "10px Arial";
+    for (let i = 0; i < categories.length; i++) {
+      if (userSelections[i] > 0) continue; // Skip filled slices
+      const startAngle = i * angleStep;
+      const endAngle = (i + 1) * angleStep;
+      const midAngle = (startAngle + endAngle) / 2;
+
       for (let j = 0; j < levels; j++) {
         const innerR = (j / levels) * maxRadius;
         const outerR = ((j + 1) / levels) * maxRadius;
-        const startAngle = i * angleStep;
-        const endAngle = (i + 1) * angleStep;
-
-        ctx.beginPath();
-        ctx.moveTo(centerX, centerY);
-        ctx.arc(centerX, centerY, outerR, startAngle, endAngle);
-        ctx.arc(centerX, centerY, innerR, endAngle, startAngle, true);
-        ctx.closePath();
-
-        let fillColor = "#ffffff";
-        if (userSelections[i] > j) {
-          fillColor = j >= 4 ? colors.dark : j >= 2 ? colors.mid : colors.light;
-        }
-        ctx.fillStyle = fillColor;
-        ctx.fill();
-
-        ctx.strokeStyle = colors.stroke;
-        ctx.lineWidth = 1.2;
-        ctx.stroke();
-
-        const midAngle = (startAngle + endAngle) / 2;
         const labelRadius = (innerR + outerR) / 2;
         const x = centerX + labelRadius * Math.cos(midAngle);
         const y = centerY + labelRadius * Math.sin(midAngle);
-
-        ctx.fillStyle = (fillColor === colors.dark) ? "#ffffff" : colors.text;
-        ctx.font = "12px Arial";
+        ctx.fillStyle = colors.text;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(j + 1, x, y);
       }
     }
 
-    // Category labels
-    ctx.fillStyle = colors.text;
-    ctx.font = "12px Arial";
-    for (let i = 0; i < categories.length; i++) {
-      const angle = (i + 0.5) * angleStep;
-      const labelRadius = maxRadius + 35;
-      const x = centerX + labelRadius * Math.cos(angle);
-      const y = centerY + labelRadius * Math.sin(angle);
-      ctx.fillText(categories[i], x, y);
-    }
-
     // Total score
     ctx.fillStyle = colors.text;
     ctx.font = "bold 14px Arial";
     ctx.textAlign = "right";
-    ctx.textBaseline = "bottom"; // <-- This ensures it hugs the corner properly
+    ctx.textBaseline = "bottom";
     ctx.fillText("Total: " + totalScore() + " / 25", canvas.width - 10, canvas.height - 10);
-
 
     // Warning message
     if (showWarning) {
       ctx.fillStyle = colors.alertText;
       ctx.font = "bold 14px Arial";
       ctx.textAlign = "center";
-      ctx.fillText("⚠ Total score cannot exceed 25", centerX, canvas.height - 10);
+      ctx.textBaseline = "bottom";
+      ctx.fillText("⚠ Total score cannot exceed 25", canvas.width / 2, canvas.height - 30);
     }
   }
 
@@ -161,4 +183,5 @@
 </script>
 </body>
 </html>
+
 
