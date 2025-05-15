@@ -100,8 +100,11 @@
     // Total score
     ctx.fillStyle = colors.text;
     ctx.font = "bold 14px Arial";
-    ctx.textAlign = "left";
-    ctx.fillText("Total: " + totalScore() + " / 25", 10, 22);
+    ctx.textAlign = "right";
+    ctx.textBaseline = "bottom"; // <-- This ensures it hugs the corner properly
+    ctx.fillText("Total: " + totalScore() + " / 25", canvas.width - 10, canvas.height - 10);
+
+
 
     // Warning message
     if (showWarning) {
