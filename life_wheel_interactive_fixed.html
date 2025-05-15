@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -15,14 +14,14 @@
   </style>
 </head>
 <body>
-<canvas id="lifeWheel" width="500" height="500"></canvas>
+<canvas id="lifeWheel" width="500" height="480"></canvas>
 
 <script>
   const canvas = document.getElementById('lifeWheel');
   const ctx = canvas.getContext('2d');
   const centerX = canvas.width / 2;
-  const centerY = canvas.height / 2;
-  const maxRadius = 200;
+  const centerY = canvas.height / 2 - 10;
+  const maxRadius = 180;
   const levels = 5;
   const categories = [
     "Spiritual", "Learning", "Career", "Financial",
@@ -30,9 +29,26 @@
   ];
   const angleStep = (2 * Math.PI) / categories.length;
   const userSelections = new Array(categories.length).fill(0);
+  let showWarning = false;
+
+  const colors = {
+    light: "#8ECAE6",
+    mid: "#219EBC",
+    dark: "#023047",
+    stroke: "#219EBC",
+    text: "#023047",
+    alertText: "#FB8500"
+  };
 
   function drawWheel() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Decorative solid center (not clickable)
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 14, 0, 2 * Math.PI);
+    ctx.fillStyle = colors.text;
+    ctx.fill();
+
     for (let i = 0; i < categories.length; i++) {
       for (let j = 0; j < levels; j++) {
         const innerR = (j / levels) * maxRadius;
@@ -40,39 +56,59 @@
         const startAngle = i * angleStep;
         const endAngle = (i + 1) * angleStep;
 
-        // Color selection
-        if (userSelections[i] > j) {
-          ctx.fillStyle = "rgba(92, 182, 203, 0.6)";
-        } else {
-          ctx.fillStyle = "#ffffff";
-        }
-
         ctx.beginPath();
         ctx.moveTo(centerX, centerY);
         ctx.arc(centerX, centerY, outerR, startAngle, endAngle);
-        ctx.lineTo(centerX, centerY);
         ctx.arc(centerX, centerY, innerR, endAngle, startAngle, true);
         ctx.closePath();
+
+        let fillColor = "#ffffff";
+        if (userSelections[i] > j) {
+          fillColor = j >= 4 ? colors.dark : j >= 2 ? colors.mid : colors.light;
+        }
+        ctx.fillStyle = fillColor;
         ctx.fill();
 
-        // Optional: segment outline
-        ctx.strokeStyle = "#aaa";
-        ctx.lineWidth = 0.5;
+        ctx.strokeStyle = colors.stroke;
+        ctx.lineWidth = 1.2;
         ctx.stroke();
+
+        const midAngle = (startAngle + endAngle) / 2;
+        const labelRadius = (innerR + outerR) / 2;
+        const x = centerX + labelRadius * Math.cos(midAngle);
+        const y = centerY + labelRadius * Math.sin(midAngle);
+
+        ctx.fillStyle = (fillColor === colors.dark) ? "#ffffff" : colors.text;
+        ctx.font = "12px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(j + 1, x, y);
       }
     }
 
     // Category labels
-    ctx.fillStyle = "#000";
+    ctx.fillStyle = colors.text;
     ctx.font = "12px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
     for (let i = 0; i < categories.length; i++) {
       const angle = (i + 0.5) * angleStep;
-      const labelRadius = maxRadius + 20;
+      const labelRadius = maxRadius + 35;
       const x = centerX + labelRadius * Math.cos(angle);
       const y = centerY + labelRadius * Math.sin(angle);
       ctx.fillText(categories[i], x, y);
+    }
+
+    // Total score
+    ctx.fillStyle = colors.text;
+    ctx.font = "bold 14px Arial";
+    ctx.textAlign = "left";
+    ctx.fillText("Total: " + totalScore() + " / 25", 10, 22);
+
+    // Warning message
+    if (showWarning) {
+      ctx.fillStyle = colors.alertText;
+      ctx.font = "bold 14px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("⚠ Total score cannot exceed 25", centerX, canvas.height - 10);
     }
   }
 
@@ -89,12 +125,31 @@
     return null;
   }
 
+  function totalScore() {
+    return userSelections.reduce((a, b) => a + b, 0);
+  }
+
   canvas.addEventListener('click', (e) => {
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     const segment = getSegmentFromCoords(x, y);
     if (segment) {
+      const currentTotal = totalScore();
+      const currentVal = userSelections[segment.categoryIndex];
+      const proposedVal = segment.level;
+      const newTotal = currentTotal - currentVal + proposedVal;
+
+      if (newTotal > 25) {
+        showWarning = true;
+        drawWheel();
+        setTimeout(() => {
+          showWarning = false;
+          drawWheel();
+        }, 2000);
+        return;
+      }
+
       userSelections[segment.categoryIndex] = segment.level;
       drawWheel();
     }
@@ -104,3 +159,4 @@
 </script>
 </body>
 </html>
+
