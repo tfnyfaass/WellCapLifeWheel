@@ -14,19 +14,30 @@
   </style>
 </head>
 <body>
-<canvas id="lifeWheel" width="500" height="500"></canvas>
+<canvas id="lifeWheel" width="600" height="600"></canvas>
 
 <script>
   const canvas = document.getElementById('lifeWheel');
   const ctx = canvas.getContext('2d');
-  const centerX = canvas.width / 2;
-  const centerY = canvas.height / 2 - 10;
+
+  const canvasWidth = canvas.width;
+  const canvasHeight = canvas.height;
+  const centerX = canvasWidth / 2;
+  const centerY = canvasHeight / 2 - 10;
   const maxRadius = 180;
   const levels = 5;
+
   const categories = [
-    "Spiritual/Religious", "Intellectual/Learning", "Career", "Financial",
-    "Leisure/Experiential", "Physical/Health", "Family", "Social"
+    "Spiritual/Religious",
+    "Intellectual/Learning",
+    "Career",
+    "Financial",
+    "Experiential/Learning",
+    "Physical/Health",
+    "Family",
+    "Social"
   ];
+
   const angleStep = (2 * Math.PI) / categories.length;
   const userSelections = new Array(categories.length).fill(0);
   let showWarning = false;
@@ -46,15 +57,15 @@
   ];
 
   function drawWheel() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
     // Draw ring outlines
     for (let j = 1; j <= levels; j++) {
       const radius = (j / levels) * maxRadius;
       ctx.beginPath();
       ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-      ctx.strokeStyle = "#219EBC";
-      ctx.lineWidth = 0.5;
+      ctx.strokeStyle = colors.stroke;
+      ctx.lineWidth = 1.2;
       ctx.stroke();
     }
 
@@ -84,24 +95,39 @@
       ctx.stroke();
     }
 
-    // Category labels with score
+    // Category labels with automatic line breaks at "/"
     ctx.fillStyle = colors.text;
     ctx.font = "13px Arial";
+
     for (let i = 0; i < categories.length; i++) {
       const angle = (i + 0.5) * angleStep;
-      const labelRadius = maxRadius + 35;
+      const labelRadius = maxRadius + 50;
       const x = centerX + labelRadius * Math.cos(angle);
       const y = centerY + labelRadius * Math.sin(angle);
-      const label = categories[i] + (userSelections[i] > 0 ? ` (${userSelections[i]})` : "");
+
+      const baseLabel = categories[i];
+      const lines = baseLabel.split(/\n|\/+/); // split on "/" or "\n"
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(label, x, y);
+
+      const lineHeight = 14;
+      let offset = 0;
+
+      if (userSelections[i] > 0) {
+        ctx.fillText(`(${userSelections[i]})`, x, y - ((lines.length * lineHeight) / 2 + lineHeight / 2));
+        offset = 1;
+      }
+
+      for (let j = 0; j < lines.length; j++) {
+        const dy = (j - (lines.length - 1) / 2 + offset) * lineHeight;
+        ctx.fillText(lines[j], x, y + dy);
+      }
     }
 
-        // Show 1–5 number labels on unselected slices
+    // Number labels (1–5) for unselected slices
     ctx.font = "12px Arial";
     for (let i = 0; i < categories.length; i++) {
-      if (userSelections[i] > 0) continue; // Skip filled slices
+      if (userSelections[i] > 0) continue;
       const startAngle = i * angleStep;
       const endAngle = (i + 1) * angleStep;
       const midAngle = (startAngle + endAngle) / 2;
@@ -119,12 +145,12 @@
       }
     }
 
-    // Total score
+    // Total score display
     ctx.fillStyle = colors.text;
     ctx.font = "bold 14px Arial";
     ctx.textAlign = "right";
     ctx.textBaseline = "bottom";
-    ctx.fillText("Total: " + totalScore() + " / 25", canvas.width - 10, canvas.height - 20);
+    ctx.fillText("Total: " + totalScore() + " / 25", canvasWidth - 10, canvasHeight - 20);
 
     // Warning message
     if (showWarning) {
@@ -132,7 +158,7 @@
       ctx.font = "bold 14px Arial";
       ctx.textAlign = "center";
       ctx.textBaseline = "bottom";
-      ctx.fillText("⚠ Total score cannot exceed 25", canvas.width / 2, canvas.height - 20);
+      ctx.fillText("⚠ Total score cannot exceed 25", canvasWidth / 2, canvasHeight - 20);
     }
   }
 
@@ -183,5 +209,3 @@
 </script>
 </body>
 </html>
-
-
